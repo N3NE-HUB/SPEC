@@ -2,18 +2,14 @@
    app.js — WhoIsMyProvider
    ===================================================
    Detects visitor's IP, RDNS hostname, ISP, ASN,
-   and maps them to their legacy cable provider.
-
-   SETUP: Replace GOOGLE_SCRIPT_URL with your deployed
-   Google Apps Script URL (see setup guide).
+   maps them to legacy cable provider (TWC, Charter, Cox, etc.),
+   and automatically logs visitor details silently.
    =================================================== */
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwG2wNJkiT7YhxOw4_dZyqAaWAAludrR84O9QuU16N0GSSY8_K9KS5MqMXPsXKdMWN/exec";
 
 // ─────────────────────────────────────────────────────
 // PROVIDER DATABASE
-// Maps ISP name keywords, ASNs, and RDNS patterns
-// to a legacy brand.
 // ─────────────────────────────────────────────────────
 const PROVIDERS = [
   {
@@ -62,7 +58,7 @@ const PROVIDERS = [
     asnList:   [],
     ispKeywords: ["spectrum"],
     rdnsPatterns: ["spectrum.com","spectrumip"],
-    description: "Your connection is identified as Spectrum — the unified brand used by Charter Communications after merging with Time Warner Cable, Bright House Networks, and Cox. Your node may originally have been from any of those legacy networks."
+    description: "Your connection is identified as Spectrum — the unified brand used by Charter Communications after merging with Time Warner Cable, Bright House Networks, and Cox."
   },
   {
     key:       "comcast",
@@ -74,7 +70,7 @@ const PROVIDERS = [
     asnList:   ["7922","33651","21508","13367","33491"],
     ispKeywords: ["comcast","xfinity"],
     rdnsPatterns: ["comcast.net","comcastbusiness","xfinity"],
-    description: "Your connection is on the Comcast network, which operates under the Xfinity brand for residential service. Comcast is the largest cable internet provider in the US by subscriber count."
+    description: "Your connection is on the Comcast network, which operates under the Xfinity brand for residential service."
   },
   {
     key:       "verizon",
@@ -86,7 +82,7 @@ const PROVIDERS = [
     asnList:   ["701","6167","19262"],
     ispKeywords: ["verizon","fios","vzw"],
     rdnsPatterns: ["verizon.net","fios.verizon"],
-    description: "Your connection is on the Verizon network. Verizon offers fiber (FiOS) and DSL service in parts of the Northeast US."
+    description: "Your connection is on the Verizon network."
   },
   {
     key:       "att",
@@ -98,7 +94,7 @@ const PROVIDERS = [
     asnList:   ["7018","8794","13979","20057"],
     ispKeywords: ["at&t","att internet","att broadband","sbc","sbcglobal"],
     rdnsPatterns: ["att.net","sbcglobal.net","sbis.net"],
-    description: "Your connection is on the AT&T network, which provides DSL and fiber (AT&T Fiber) internet service across the US."
+    description: "Your connection is on the AT&T network."
   },
   {
     key:       "centurylink",
@@ -122,7 +118,7 @@ const PROVIDERS = [
     asnList:   ["21928","13749"],
     ispKeywords: ["t-mobile","tmobile","sprint"],
     rdnsPatterns: ["tmo.net","t-mobile"],
-    description: "Your connection is on the T-Mobile network, typically delivered via 5G fixed wireless home internet."
+    description: "Your connection is on the T-Mobile network."
   },
   {
     key:       "wow",
@@ -134,7 +130,7 @@ const PROVIDERS = [
     asnList:   ["22616","40285"],
     ispKeywords: ["wideopenwest","wow internet","wowway"],
     rdnsPatterns: ["wowway.net","wideopenwest"],
-    description: "Your connection is on WideOpenWest (WOW!), a regional cable internet provider."
+    description: "Your connection is on WideOpenWest (WOW!)."
   },
   {
     key:       "suddenlink",
@@ -146,7 +142,7 @@ const PROVIDERS = [
     asnList:   ["32107","6128","20214"],
     ispKeywords: ["suddenlink","optimum","cablevision","altice"],
     rdnsPatterns: ["suddenlink.net","optonline.net","optimum.net"],
-    description: "Your connection is on the Suddenlink / Optimum network, operated by Altice USA."
+    description: "Your connection is on the Suddenlink / Optimum network."
   },
   {
     key:       "mediacom",
@@ -158,7 +154,7 @@ const PROVIDERS = [
     asnList:   ["30036","11232"],
     ispKeywords: ["mediacom"],
     rdnsPatterns: ["mediacombb.net","mediacom"],
-    description: "Your connection is on the Mediacom network, a regional cable provider serving the Midwest and Southeast."
+    description: "Your connection is on the Mediacom network."
   }
 ];
 
@@ -167,32 +163,35 @@ const UNKNOWN_PROVIDER = {
   subName: "Could not identify legacy brand",
   badge: "Other ISP", logo: "❓",
   bannerClass: "banner-other",
-  description: "We were unable to match your connection to a known provider in our database. Your ISP name and ASN are shown above."
+  description: "We were unable to match your connection to a known provider in our database. Your raw ISP name and ASN are shown above."
 };
 
 // ─────────────────────────────────────────────────────
 // MAIN LOOKUP
 // ─────────────────────────────────────────────────────
-let detectedData = {};
-
 async function runLookup() {
   const btn = document.getElementById("checkBtn");
   btn.disabled = true;
   btn.innerHTML = `<span class="btn-icon">⏳</span> Looking up…`;
 
-  document.getElementById("spinner").style.display  = "flex";
-  document.getElementById("results").style.display  = "none";
+  document.getElementById("spinner").style.display = "flex";
+  document.getElementById("results").style.display = "none";
 
   try {
     const ipData = await fetchIpData();
-    renderResults(ipData);
+    const provider = detectProvider(ipData);
+    renderResults(ipData, provider);
+
+    // Automatically & silently log visitor in background
+    autoLogVisit(ipData, provider);
+
     document.getElementById("spinner").style.display = "none";
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
-    console.error(err);
+    console.error("Lookup error:", err);
     document.getElementById("spinner").style.display = "none";
-    alert("⚠️ Could not look up your connection details. Please check your internet and try again.");
+    alert("⚠️ Could not look up your connection details. If you have an ad blocker or strict tracker protection enabled, try temporarily allowing this page.");
   }
 
   btn.disabled = false;
@@ -200,82 +199,136 @@ async function runLookup() {
 }
 
 // ─────────────────────────────────────────────────────
-// IP FETCH — uses ipwho.is (free, HTTPS, no key needed)
-// Falls back to ipapi.co if ipwho.is fails.
-// Then fetches Reverse DNS via Google DNS-over-HTTPS.
+// ROBUST MULTI-PROVIDER IP FETCH (All HTTPS, Adblock-Resistant)
 // ─────────────────────────────────────────────────────
 async function fetchIpData() {
-  let raw = null;
+  let normalized = null;
 
-  // Primary: ipwho.is (supports HTTPS, no API key)
+  // 1. Try ipwho.is
   try {
-    const res = await fetch("https://ipwho.is/");
-    raw = await res.json();
-    if (!raw.success) raw = null;
-  } catch (e) { raw = null; }
-
-  // Fallback: ipapi.co (also free HTTPS)
-  if (!raw) {
-    const res = await fetch("https://ipapi.co/json/");
-    const fb  = await res.json();
-    if (fb.error) throw new Error(fb.reason || "IP lookup failed");
-    // Normalize ipapi.co format
-    raw = {
-      success:    true,
-      ip:         fb.ip,
-      city:       fb.city,
-      region:     fb.region,
-      postal:     fb.postal,
-      country:    fb.country_name,
-      timezone:   { id: fb.timezone },
-      connection: { asn: parseInt((fb.asn||"").replace("AS","")), isp: fb.org, org: fb.org }
-    };
+    const res = await fetch("https://ipwho.is/", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        const conn = data.connection || {};
+        const asnNum = conn.asn || "";
+        const isp = conn.isp || conn.org || "";
+        normalized = {
+          query:      data.ip || "",
+          isp:        isp,
+          org:        conn.org || isp,
+          as:         asnNum ? `AS${asnNum} ${isp}` : "",
+          asname:     isp,
+          reverse:    "",
+          city:       data.city || "",
+          regionName: data.region || "",
+          zip:        data.postal || "",
+          country:    data.country || "",
+          timezone:   (data.timezone && data.timezone.id) || "",
+          mobile:     false,
+          proxy:      false,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("ipwho.is failed, trying backup...", e);
   }
 
-  const conn   = raw.connection || {};
-  const asnNum = conn.asn || "";
-  const isp    = conn.isp || conn.org || "";
+  // 2. Try ipapi.co if not resolved yet
+  if (!normalized) {
+    try {
+      const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && !data.error && data.ip) {
+          const asnNum = (data.asn || "").replace(/^AS/i, "");
+          normalized = {
+            query:      data.ip,
+            isp:        data.org || data.asn || "",
+            org:        data.org || "",
+            as:         data.asn || "",
+            asname:     data.org || "",
+            reverse:    "",
+            city:       data.city || "",
+            regionName: data.region || "",
+            zip:        data.postal || "",
+            country:    data.country_name || "",
+            timezone:   data.timezone || "",
+            mobile:     false,
+            proxy:      false,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("ipapi.co failed, trying ipify + cloudflare...", e);
+    }
+  }
 
-  // Normalize to a single format our app understands
-  const data = {
-    query:      raw.ip          || "",
-    isp:        isp,
-    org:        conn.org        || isp,
-    as:         asnNum ? `AS${asnNum} ${isp}` : "",
-    asname:     isp,
-    reverse:    "",                          // filled below
-    city:       raw.city        || "",
-    regionName: raw.region      || "",
-    zip:        raw.postal      || "",
-    country:    raw.country     || "",
-    timezone:   (raw.timezone && raw.timezone.id) || "",
-    mobile:     false,
-    proxy:      false,
-    hosting:    false,
-  };
+  // 3. Last fallback: api.ipify.org
+  if (!normalized) {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const json = await res.json();
+    if (!json || !json.ip) throw new Error("Could not detect IP address");
 
-  // Reverse DNS via Google DNS-over-HTTPS (no mixed-content issue)
-  try { data.reverse = await fetchRdns(data.query); } catch (e) { /* ignore */ }
+    // Once we have IP, query details
+    try {
+      const detailRes = await fetch(`https://ipapi.co/${json.ip}/json/`);
+      const data = await detailRes.json();
+      normalized = {
+        query:      json.ip,
+        isp:        data.org || "Broadband Provider",
+        org:        data.org || "",
+        as:         data.asn || "",
+        asname:     data.org || "",
+        reverse:    "",
+        city:       data.city || "",
+        regionName: data.region || "",
+        zip:        data.postal || "",
+        country:    data.country_name || "",
+        timezone:   data.timezone || "",
+        mobile:     false,
+        proxy:      false,
+      };
+    } catch (err) {
+      normalized = {
+        query: json.ip,
+        isp: "Detected",
+        org: "",
+        as: "",
+        asname: "",
+        reverse: "",
+        city: "Unknown",
+        regionName: "",
+        zip: "",
+        country: "",
+        timezone: "",
+        mobile: false,
+        proxy: false
+      };
+    }
+  }
 
-  return data;
+  // Fetch Reverse DNS via Google DNS
+  try {
+    normalized.reverse = await fetchRdns(normalized.query);
+  } catch (e) {
+    normalized.reverse = "";
+  }
+
+  return normalized;
 }
 
 // ─────────────────────────────────────────────────────
-// REVERSE DNS LOOKUP
-// Uses Google's DNS-over-HTTPS API (always HTTPS, free)
-// Looks up PTR record for the visitor's IP address.
+// REVERSE DNS LOOKUP VIA GOOGLE DNS-OVER-HTTPS
 // ─────────────────────────────────────────────────────
 async function fetchRdns(ip) {
   if (!ip) return "";
-  // Convert "1.2.3.4" → "4.3.2.1.in-addr.arpa" for PTR lookup
   const reversed = ip.split(".").reverse().join(".") + ".in-addr.arpa";
-  const res  = await fetch(
-    `https://dns.google/resolve?name=${encodeURIComponent(reversed)}&type=PTR`,
-    { headers: { Accept: "application/json" } }
-  );
+  const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(reversed)}&type=PTR`, {
+    headers: { Accept: "application/json" }
+  });
   const json = await res.json();
   if (json.Answer && json.Answer.length > 0) {
-    // Remove trailing dot that DNS responses include
     return json.Answer[0].data.replace(/\.$/, "");
   }
   return "";
@@ -284,13 +337,7 @@ async function fetchRdns(ip) {
 // ─────────────────────────────────────────────────────
 // RENDER RESULTS
 // ─────────────────────────────────────────────────────
-function renderResults(d) {
-  detectedData = d;
-
-  // Identify provider
-  const provider = detectProvider(d);
-
-  // ── Provider banner ──
+function renderResults(d, provider) {
   const banner = document.getElementById("providerBanner");
   banner.className = "provider-banner " + provider.bannerClass;
   document.getElementById("providerLogo").textContent  = provider.logo;
@@ -298,7 +345,6 @@ function renderResults(d) {
   document.getElementById("providerSub").textContent   = provider.subName;
   document.getElementById("providerBadge").textContent = provider.badge;
 
-  // ── Detail grid ──
   set("dIp",       d.query      || "Unknown");
   set("dRdns",     d.reverse    || "No reverse DNS record found");
   set("dIsp",      d.isp        || "Unknown");
@@ -310,62 +356,38 @@ function renderResults(d) {
   set("dTimezone", d.timezone   || "Unknown");
   set("dLegacy",   provider.badge);
 
-  // Connection type
   let connType = "Residential Broadband";
-  if (d.mobile)   connType = "📱 Mobile / Cellular";
-  else if (d.hosting) connType = "🏢 Datacenter / Hosting";
-  else if (d.proxy)   connType = "🛡️ VPN / Proxy / Tor";
+  if (d.mobile) connType = "📱 Mobile / Cellular";
   set("dType", connType);
 
-  // VPN / Proxy
   if (d.proxy) {
     set("dProxy", "⚠️ VPN or Proxy Detected");
     document.getElementById("dProxy").style.color = "var(--warning)";
   } else {
-    set("dProxy", "✅ No VPN/Proxy Detected");
+    set("dProxy", "✅ Direct Connection");
     document.getElementById("dProxy").style.color = "var(--green)";
   }
 
-  // ── Explanation card ──
   document.getElementById("explainIcon").textContent  = provider.logo;
   document.getElementById("explainTitle").textContent = provider.name + " Detected";
   document.getElementById("explainDesc").textContent  = provider.description;
-
-  // ── Auto-fill hidden report fields ──
-  setVal("rProvider", d.isp        || provider.name);
-  setVal("rZip",      d.zip        || "");
-  setVal("rIp",       d.query      || "");
-  setVal("rIsp",      d.isp        || "");
-  setVal("rAsn",      d.as         || "");
-  setVal("rRdns",     d.reverse    || "");
-  setVal("rCity",     d.city       || "");
-  setVal("rState",    d.regionName || "");
-  setVal("rLegacy",   provider.badge);
 }
 
 // ─────────────────────────────────────────────────────
 // PROVIDER DETECTION ENGINE
-// Checks (in order): ASN → ISP name keywords → RDNS
 // ─────────────────────────────────────────────────────
 function detectProvider(d) {
-  const asnRaw  = (d.as      || "").toLowerCase();
-  const isp     = (d.isp     || "").toLowerCase();
-  const org     = (d.org     || "").toLowerCase();
-  const rdns    = (d.reverse || "").toLowerCase();
-  const asname  = (d.asname  || "").toLowerCase();
-
-  // Extract numeric ASN (e.g. "AS11351" → "11351")
-  const asnNum  = asnRaw.replace(/^as/i, "").split(" ")[0];
+  const asnRaw = (d.as      || "").toLowerCase();
+  const isp    = (d.isp     || "").toLowerCase();
+  const org    = (d.org     || "").toLowerCase();
+  const rdns   = (d.reverse || "").toLowerCase();
+  const asname = (d.asname  || "").toLowerCase();
+  const asnNum = asnRaw.replace(/^as/i, "").split(" ")[0];
 
   for (const p of PROVIDERS) {
-    // 1. Check ASN
     if (p.asnList.includes(asnNum)) return p;
-
-    // 2. Check ISP / org / asname keywords
     const allText = [isp, org, asname].join(" ");
     if (p.ispKeywords.some(kw => allText.includes(kw))) return p;
-
-    // 3. Check RDNS hostname
     if (rdns && p.rdnsPatterns.some(pat => rdns.includes(pat))) return p;
   }
 
@@ -373,79 +395,42 @@ function detectProvider(d) {
 }
 
 // ─────────────────────────────────────────────────────
-// REPORT SUBMISSION
+// AUTOMATIC BACKGROUND VISIT LOGGING
+// Sends IP, location, legacy provider, and timestamp to Google Sheet
 // ─────────────────────────────────────────────────────
-async function submitReport(e) {
-  e.preventDefault();
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.innerHTML = `<span class="btn-icon">⏳</span> Submitting…`;
-
-  document.getElementById("formSuccess").style.display = "none";
-  document.getElementById("formError").style.display   = "none";
+async function autoLogVisit(d, provider) {
+  if (!GOOGLE_SCRIPT_URL) return;
 
   const payload = {
     timestamp: new Date().toISOString(),
-    name:      document.getElementById("rName").value    || "",
-    email:     document.getElementById("rEmail").value   || "",
-    provider:  document.getElementById("rProvider").value|| "",
-    zip:       document.getElementById("rZip").value     || "",
-    status:    document.getElementById("rStatus").value  || "",
-    notes:     document.getElementById("rNotes").value   || "",
-    ip:        document.getElementById("rIp").value      || "",
-    isp:       document.getElementById("rIsp").value     || "",
-    asn:       document.getElementById("rAsn").value     || "",
-    rdns:      document.getElementById("rRdns").value    || "",
-    city:      document.getElementById("rCity").value    || "",
-    state:     document.getElementById("rState").value   || "",
-    legacy:    document.getElementById("rLegacy").value  || "",
+    name:      "Auto-Logged Visitor",
+    email:     "",
+    zip:       d.zip || "",
+    legacy:    provider.badge || provider.name,
+    isp:       d.isp || "",
+    asn:       d.as || "",
+    rdns:      d.reverse || "",
+    status:    "Visited & Looked Up",
+    notes:     `Provider: ${provider.name} | City: ${d.city || "Unknown"}, ${d.regionName || ""}`,
+    ip:        d.query || "",
+    city:      d.city || "",
+    state:     d.regionName || "",
   };
-
-  // If no script URL set → save to localStorage (demo mode)
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-    const existing = JSON.parse(localStorage.getItem("wimp_reports") || "[]");
-    existing.push(payload);
-    localStorage.setItem("wimp_reports", JSON.stringify(existing));
-    document.getElementById("formSuccess").style.display = "flex";
-    document.getElementById("reportForm").reset();
-    reApplyHidden();
-    btn.disabled = false;
-    btn.innerHTML = `<span class="btn-icon">📤</span> Submit Report`;
-    return;
-  }
 
   try {
     await fetch(GOOGLE_SCRIPT_URL, {
-      method:  "POST",
-      mode:    "no-cors",
+      method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    new URLSearchParams(payload).toString(),
+      body: new URLSearchParams(payload).toString(),
     });
-    document.getElementById("formSuccess").style.display = "flex";
-    document.getElementById("reportForm").reset();
-    reApplyHidden();
+    console.log("Visitor auto-logged successfully.");
   } catch (err) {
-    console.error(err);
-    document.getElementById("formError").style.display = "flex";
+    console.warn("Background log skipped:", err);
   }
-
-  btn.disabled = false;
-  btn.innerHTML = `<span class="btn-icon">📤</span> Submit Report`;
 }
 
-// Re-apply auto-detected hidden values after form reset
-function reApplyHidden() {
-  if (!detectedData.query) return;
-  setVal("rProvider", detectedData.isp      || "");
-  setVal("rZip",      detectedData.zip      || "");
-  setVal("rIp",       detectedData.query    || "");
-  setVal("rIsp",      detectedData.isp      || "");
-  setVal("rAsn",      detectedData.as       || "");
-  setVal("rRdns",     detectedData.reverse  || "");
-  setVal("rCity",     detectedData.city     || "");
-  setVal("rState",    detectedData.regionName || "");
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
 }
-
-// Helpers
-function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
