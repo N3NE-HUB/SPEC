@@ -18,8 +18,7 @@
           <span class="logo-text">WhoIsMyProvider</span>
         </div>
         <nav>
-          <a href="#results">My Info</a>
-          <a href="#report">Submit Report</a>
+          <a href="#results">My Connection</a>
         </nav>
       </div>
     </div>
@@ -30,7 +29,7 @@
     <div class="container">
       <h1>Who Is Your<br /><span class="highlight">Internet Provider?</span></h1>
       <p class="hero-sub">
-        We instantly detect your IP address, DNS hostname, ASN, and network details — then identify exactly which cable company your connection belongs to, including legacy brands like Time Warner Cable, Cox, and Charter.
+        We detect your IP address, DNS hostname, ASN, and network details — then identify exactly which cable company your connection belongs to, including legacy brands like Time Warner Cable, Cox, and Charter.
       </p>
       <button id="checkBtn" class="btn btn-primary" onclick="runLookup()">
         <span class="btn-icon">🔍</span> Look Up My Connection
@@ -139,83 +138,10 @@
 
   </section>
 
-  <!-- REPORT FORM -->
-  <section class="report-section container" id="report">
-    <div class="card">
-      <h2>Submit Your Report</h2>
-      <p>Share your experience with your provider — speeds, outages, service quality, or anything else. Your connection details are auto-filled below.</p>
-
-      <form id="reportForm" onsubmit="submitReport(event)">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Your Name <span class="optional">(optional)</span></label>
-            <input type="text" id="rName" placeholder="e.g. Jane Doe" />
-          </div>
-          <div class="form-group">
-            <label>Email <span class="optional">(optional)</span></label>
-            <input type="email" id="rEmail" placeholder="you@example.com" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Provider Detected</label>
-            <input type="text" id="rProvider" placeholder="Run the lookup above first" readonly />
-          </div>
-          <div class="form-group">
-            <label>ZIP Code</label>
-            <input type="text" id="rZip" placeholder="Run the lookup above first" />
-          </div>
-        </div>
-
-        <div class="form-group full">
-          <label>What Are You Experiencing? *</label>
-          <select id="rStatus" required>
-            <option value="">— Select —</option>
-            <option>Speeds are great — no complaints</option>
-            <option>Speeds are slow / inconsistent</option>
-            <option>Frequent outages or disconnections</option>
-            <option>Service just recently improved</option>
-            <option>Service recently got worse</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div class="form-group full">
-          <label>Additional Notes <span class="optional">(optional)</span></label>
-          <textarea id="rNotes" rows="4" placeholder="Speeds you're seeing, times of day it's worst, anything you want to share…"></textarea>
-        </div>
-
-        <!-- Hidden auto-filled fields -->
-        <input type="hidden" id="rIp" />
-        <input type="hidden" id="rIsp" />
-        <input type="hidden" id="rAsn" />
-        <input type="hidden" id="rRdns" />
-        <input type="hidden" id="rCity" />
-        <input type="hidden" id="rState" />
-        <input type="hidden" id="rLegacy" />
-
-        <button type="submit" class="btn btn-primary" id="submitBtn">
-          <span class="btn-icon">📤</span> Submit Report
-        </button>
-      </form>
-
-      <div id="formSuccess" class="success-msg" style="display:none;">
-        <span>✅</span> Thank you! Your report was submitted.
-      </div>
-      <div id="formError" class="error-msg" style="display:none;">
-        <span>⚠️</span> Something went wrong. Please try again.
-      </div>
-    </div>
-  </section>
-
   <!-- FOOTER -->
   <footer class="site-footer">
     <div class="container">
-      <p>WhoIsMyProvider is an independent community tool. Not affiliated with Spectrum, Charter, Cox, or any ISP.</p>
-      <p style="margin-top:.4rem;">
-        <a href="admin.html" style="color:inherit;opacity:.25;font-size:.78rem;text-decoration:none;">Admin</a>
-      </p>
+      <p>WhoIsMyProvider is an independent community lookup tool. Not affiliated with Spectrum, Charter, Cox, or any ISP.</p>
     </div>
   </footer>
 
