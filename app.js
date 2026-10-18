@@ -6,7 +6,7 @@
    and automatically logs visitor details silently.
    =================================================== */
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwG2wNJkiT7YhxOw4_dZyqAaWAAludrR84O9QuU16N0GSSY8_K9KS5MqMXPsXKdMWN/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgBcrzO67pB01TRXitTOSRu9Sw2FLqxjfVf2lZCgl7HWHxf0ejdjssO4L3oy3y0WUJ/exec";
 
 // ─────────────────────────────────────────────────────
 // PROVIDER DATABASE
