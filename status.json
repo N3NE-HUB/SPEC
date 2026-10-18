@@ -1,0 +1,67 @@
+{
+  "_comment": "Edit this file to add or update Highsplit / node-split status areas. Save and push to GitHub to update the live site.",
+  "_howToEdit": "Add an entry to the 'areas' array. Match visitors by 'zipCodes' OR by 'cities' + 'states'. Status values: in-progress | planned | complete",
+  "lastUpdated": "2026-10-17",
+  "areas": [
+    {
+      "areaName":  "New York City — Manhattan / Brooklyn (TWC Legacy)",
+      "provider":  "TWC",
+      "zipCodes":  ["10001","10002","10003","10004","10005","10006","10007","10009","10010","10011","10012","10013","10014","11201","11202","11203","11204","11205","11206","11207"],
+      "cities":    ["New York City","Brooklyn","Manhattan"],
+      "states":    ["New York","NY"],
+      "status":    "in-progress",
+      "eta":       "Q2 2027",
+      "notes":     "Node split construction active across several Manhattan and Brooklyn service areas."
+    },
+    {
+      "areaName":  "Los Angeles — West Side (TWC Legacy)",
+      "provider":  "TWC",
+      "zipCodes":  ["90001","90002","90003","90010","90019","90025","90034","90064","90066"],
+      "cities":    ["Los Angeles","Santa Monica","Culver City"],
+      "states":    ["California","CA"],
+      "status":    "planned",
+      "eta":       "Q3 2027",
+      "notes":     "Highsplit scheduled for West LA markets in the TWC legacy footprint."
+    },
+    {
+      "areaName":  "Charlotte, NC (Charter Legacy)",
+      "provider":  "Charter",
+      "zipCodes":  ["28201","28202","28203","28204","28205","28206","28207","28208","28209","28210","28211","28212","28213","28214","28215","28216","28217","28227"],
+      "cities":    ["Charlotte"],
+      "states":    ["North Carolina","NC"],
+      "status":    "complete",
+      "eta":       null,
+      "notes":     "Node split completed. Customers should see significantly improved speeds."
+    },
+    {
+      "areaName":  "Phoenix Metro (Cox Legacy)",
+      "provider":  "Cox",
+      "zipCodes":  ["85001","85002","85003","85004","85005","85006","85007","85008","85009","85010","85011","85012","85013","85014","85015","85016","85017","85018","85019","85020"],
+      "cities":    ["Phoenix","Tempe","Scottsdale","Mesa"],
+      "states":    ["Arizona","AZ"],
+      "status":    "in-progress",
+      "eta":       "Q4 2026",
+      "notes":     "Active node split work in Phoenix metro Cox markets."
+    },
+    {
+      "areaName":  "San Diego, CA (Cox Legacy)",
+      "provider":  "Cox",
+      "zipCodes":  ["92101","92103","92104","92105","92106","92107","92108","92110","92111","92115","92116","92117","92119","92120","92121","92123","92124","92131"],
+      "cities":    ["San Diego","Chula Vista","El Cajon"],
+      "states":    ["California","CA"],
+      "status":    "planned",
+      "eta":       "Q1 2027",
+      "notes":     "Highsplit upgrade scheduled for San Diego Cox footprint."
+    },
+    {
+      "areaName":  "Dallas–Fort Worth (Charter Legacy)",
+      "provider":  "Charter",
+      "zipCodes":  ["75201","75202","75203","75204","75205","75206","75207","75208","75209","75210","75211","75212","75214","75215","75216","75217","75218","75219","75220","75221","75222","75223","75224","75225","75226","75227","75228","75229","75230"],
+      "cities":    ["Dallas","Fort Worth","Irving","Arlington"],
+      "states":    ["Texas","TX"],
+      "status":    "in-progress",
+      "eta":       "Q3 2027",
+      "notes":     "DFW metro Charter legacy markets actively undergoing Highsplit."
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectrum Node Checker — Highsplit Status</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-icon">📡</span>
+          <span class="logo-text">NodeCheck</span>
+        </div>
+        <nav>
+          <a href="#about">About</a>
+          <a href="#report">Submit Report</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <h1>Is Highsplit Being Worked On<br />In <span class="highlight">Your Area?</span></h1>
+      <p class="hero-sub">We automatically detect your internet provider and check whether node split upgrades are active or planned near you.</p>
+      <button id="checkBtn" class="btn btn-primary" onclick="runCheck()">
+        <span class="btn-icon">🔍</span> Check My Node Now
+      </button>
+    </div>
+  </section>
+
+  <!-- RESULTS CARD -->
+  <section class="results-section container" id="results" style="display:none;">
+    <div class="card results-card">
+
+      <div class="card-header">
+        <h2>Your Connection Details</h2>
+        <span class="badge" id="statusBadge">Checking…</span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">IP Address</div>
+          <div class="info-value" id="ipVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Internet Provider</div>
+          <div class="info-value" id="ispVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Provider Legacy Brand</div>
+          <div class="info-value" id="legacyVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">ASN / Network</div>
+          <div class="info-value" id="asnVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Location</div>
+          <div class="info-value" id="locVal">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">ZIP / Postal Code</div>
+          <div class="info-value" id="zipVal">—</div>
+        </div>
+      </div>
+
+      <!-- HIGHSPLIT STATUS BOX -->
+      <div class="highsplit-box" id="highsplitBox">
+        <div class="highsplit-icon" id="highsplitIcon">⏳</div>
+        <div class="highsplit-text">
+          <h3 id="highsplitTitle">Checking Highsplit Status…</h3>
+          <p id="highsplitDesc">Please wait while we look up your area.</p>
+          <div class="eta-badge" id="etaBadge" style="display:none;">
+            <span>🗓️ Estimated Completion:</span>
+            <strong id="etaVal"></strong>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SPINNER -->
+  <div class="spinner-wrap" id="spinner" style="display:none;">
+    <div class="spinner"></div>
+    <p>Looking up your provider…</p>
+  </div>
+
+  <!-- ABOUT -->
+  <section class="about-section container" id="about">
+    <div class="card">
+      <h2>What Is a Node Split (Highsplit)?</h2>
+      <p>Cable internet providers like <strong>Spectrum</strong> (which acquired Time Warner Cable, Charter, and Cox) serve neighborhoods through shared network <em>nodes</em>. As more customers stream and work from home, those nodes become congested.</p>
+      <p>A <strong>node split</strong> — also called a <em>Highsplit</em> upgrade — divides a congested node into smaller segments, dramatically improving speeds and reliability for everyone on it. This site helps you find out if that work is underway or coming soon to your area.</p>
+      <div class="info-chips">
+        <span class="chip chip-twc">🔵 Time Warner Cable (TWC)</span>
+        <span class="chip chip-charter">🟣 Charter</span>
+        <span class="chip chip-cox">🟠 Cox</span>
+        <span class="chip chip-spectrum">⚪ Spectrum</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORT FORM -->
+  <section class="report-section container" id="report">
+    <div class="card">
+      <h2>Submit Your Experience</h2>
+      <p>Help us build a more complete picture of Highsplit rollouts. Share what you're seeing — slow speeds, construction activity, technician visits, or an improvement after an upgrade.</p>
+
+      <form id="reportForm" onsubmit="submitReport(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rName">Your Name <span class="optional">(optional)</span></label>
+            <input type="text" id="rName" placeholder="e.g. Jane Doe" />
+          </div>
+          <div class="form-group">
+            <label for="rEmail">Email <span class="optional">(optional)</span></label>
+            <input type="email" id="rEmail" placeholder="you@example.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rZip">ZIP Code *</label>
+            <input type="text" id="rZip" placeholder="e.g. 90210" required maxlength="10" />
+          </div>
+          <div class="form-group">
+            <label for="rProvider">Provider / Legacy Brand *</label>
+            <select id="rProvider" required>
+              <option value="">— Select —</option>
+              <option>Spectrum</option>
+              <option>Time Warner Cable (TWC)</option>
+              <option>Charter</option>
+              <option>Cox</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label for="rStatus">What Are You Experiencing? *</label>
+          <select id="rStatus" required>
+            <option value="">— Select —</option>
+            <option>Speeds improved recently — upgrade may be done</option>
+            <option>Saw construction / node work near my area</option>
+            <option>Technician visited — mentioned node work</option>
+            <option>Still having congestion / slow speeds</option>
+            <option>No changes noticed</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label for="rNotes">Additional Notes <span class="optional">(optional)</span></label>
+          <textarea id="rNotes" rows="4" placeholder="Any details you'd like to share…"></textarea>
+        </div>
+
+        <!-- Hidden fields auto-filled from IP lookup -->
+        <input type="hidden" id="rIp" />
+        <input type="hidden" id="rIsp" />
+        <input type="hidden" id="rCity" />
+        <input type="hidden" id="rState" />
+
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <span class="btn-icon">📤</span> Submit My Report
+        </button>
+      </form>
+
+      <div id="formSuccess" class="success-msg" style="display:none;">
+        <span>✅</span> Thank you! Your report has been submitted successfully.
+      </div>
+      <div id="formError" class="error-msg" style="display:none;">
+        <span>⚠️</span> Something went wrong. Please try again or check your connection.
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>NodeCheck is an independent community resource and is not affiliated with Spectrum, Charter, Cox, or any ISP.</p>
+      <p style="margin-top:.4rem;font-size:.8rem;opacity:.5;">
+        <a href="admin.html" style="color:inherit;opacity:.4;text-decoration:none;">Admin</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
