@@ -1,30 +1,19 @@
 /* ===================================================
-   admin.js — Admin panel logic
+   admin.js — WhoIsMyProvider Admin Panel
    ===================================================
-
-   SETUP: Replace ADMIN_PASSWORD and GOOGLE_SCRIPT_URL
-   with your actual values before uploading to GitHub.
-
-   ADMIN_PASSWORD — pick any password you like.
-   GOOGLE_SCRIPT_URL — same URL from app.js, but used
-     here with ?action=get to fetch stored reports.
+   SETUP: Change ADMIN_PASSWORD to your own password.
+   Paste the same GOOGLE_SCRIPT_URL from app.js.
    =================================================== */
 
-// ── CONFIG ──────────────────────────────────────────
-const ADMIN_PASSWORD    = "naborcito";     // ← CHANGE THIS
+const ADMIN_PASSWORD    = "naborcito";             // ← CHANGE THIS
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwG2wNJkiT7YhxOw4_dZyqAaWAAludrR84O9QuU16N0GSSY8_K9KS5MqMXPsXKdMWN/exec"; // ← same as app.js
 
-// Session key
-const SESSION_KEY = "nodecheck_admin_auth";
+const SESSION_KEY = "wimp_admin_auth";
 
-// ── ON LOAD ───────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  if (sessionStorage.getItem(SESSION_KEY) === "true") {
-    showDashboard();
-  }
+  if (sessionStorage.getItem(SESSION_KEY) === "true") showDashboard();
 });
 
-// ── LOGIN ────────────────────────────────────────────
 function login() {
   const pass = document.getElementById("adminPass").value;
   if (pass === ADMIN_PASSWORD) {
@@ -45,64 +34,60 @@ function logout() {
   document.getElementById("adminPass").value = "";
 }
 
-// ── SHOW DASHBOARD ────────────────────────────────────
 function showDashboard() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("adminDash").style.display   = "block";
   loadReports();
 }
 
-// ── LOAD REPORTS ──────────────────────────────────────
 async function loadReports() {
-  const tbody = document.getElementById("reportsBody");
+  const tbody   = document.getElementById("reportsBody");
   const countEl = document.getElementById("reportCount");
+  let   reports = [];
 
-  let reports = [];
-
-  // Try Google Apps Script first
   if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
     try {
-      const res  = await fetch(GOOGLE_SCRIPT_URL + "?action=get");
+      const res = await fetch(GOOGLE_SCRIPT_URL + "?action=get");
       const data = await res.json();
       reports = Array.isArray(data) ? data : (data.reports || []);
     } catch (err) {
-      console.warn("Could not load from Google Script, falling back to localStorage:", err);
+      console.warn("Google Script fetch failed, using localStorage:", err);
     }
   }
 
-  // Fallback: localStorage (used when Google Script not configured)
   if (reports.length === 0) {
-    reports = JSON.parse(localStorage.getItem("nodecheck_reports") || "[]");
+    reports = JSON.parse(localStorage.getItem("wimp_reports") || "[]");
   }
 
   countEl.textContent = reports.length + " report" + (reports.length !== 1 ? "s" : "");
 
   if (reports.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No reports submitted yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="empty-state">No reports yet — share your site!</td></tr>`;
     return;
   }
 
-  // Sort newest first
   reports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   tbody.innerHTML = reports.map((r, i) => `
     <tr>
       <td>${reports.length - i}</td>
-      <td>${formatDate(r.timestamp)}</td>
-      <td>${esc(r.name)  || "<em style='opacity:.4'>—</em>"}</td>
-      <td>${esc(r.zip)   || "—"}</td>
-      <td>${esc(r.provider) || "—"}</td>
-      <td>${esc(r.status) || "—"}</td>
-      <td>${esc(r.city)  || "—"}</td>
-      <td>${esc(r.state) || "—"}</td>
-      <td style="font-size:.78rem;font-family:monospace;">${esc(r.ip) || "—"}</td>
-      <td>${esc(r.email) || "<em style='opacity:.4'>—</em>"}</td>
-      <td style="max-width:200px;white-space:pre-wrap;font-size:.8rem;">${esc(r.notes) || "—"}</td>
+      <td>${fmtDate(r.timestamp)}</td>
+      <td>${esc(r.name)    || "<em style='opacity:.4'>—</em>"}</td>
+      <td>${esc(r.zip)     || "—"}</td>
+      <td><strong>${esc(r.legacy)   || esc(r.provider) || "—"}</strong></td>
+      <td style="font-size:.78rem;">${esc(r.isp)      || "—"}</td>
+      <td style="font-family:monospace;font-size:.78rem;">${esc(r.asn)   || "—"}</td>
+      <td style="font-family:monospace;font-size:.72rem;max-width:160px;word-break:break-all;">${esc(r.rdns)  || "—"}</td>
+      <td>${esc(r.status)  || "—"}</td>
+      <td>${esc(r.city)    || "—"}</td>
+      <td>${esc(r.state)   || "—"}</td>
+      <td style="font-family:monospace;font-size:.78rem;">${esc(r.ip)    || "—"}</td>
+      <td>${esc(r.email)   || "<em style='opacity:.4'>—</em>"}</td>
+      <td style="max-width:180px;white-space:pre-wrap;font-size:.78rem;">${esc(r.notes) || "—"}</td>
     </tr>
   `).join("");
 }
 
-// ── CSV EXPORT ────────────────────────────────────────
 function exportCsv() {
   const rows  = document.querySelectorAll("#reportsTable tr");
   const lines = [];
@@ -112,31 +97,21 @@ function exportCsv() {
     );
     lines.push(cells.join(","));
   });
-
   const blob = new Blob([lines.join("\n")], { type: "text/csv" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
-  a.href     = url;
-  a.download = "nodecheck_reports_" + new Date().toISOString().slice(0,10) + ".csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  a.href = url; a.download = "wimp_reports_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click(); URL.revokeObjectURL(url);
 }
 
-// ── UTILS ────────────────────────────────────────────
-function esc(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;");
+function esc(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-function formatDate(iso) {
+function fmtDate(iso) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("en-US", {
-      month:"short", day:"numeric", year:"numeric",
-      hour:"2-digit", minute:"2-digit"
-    });
+    return new Date(iso).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"});
   } catch { return iso; }
 }

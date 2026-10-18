@@ -3,43 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NodeCheck — Admin</title>
+  <title>Admin — WhoIsMyProvider</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="loginScreen">
     <div class="container">
       <div class="card admin-login">
         <h2>🔐 Admin Login</h2>
         <div class="form-group">
           <label for="adminPass">Password</label>
-          <input type="password" id="adminPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') login()" autofocus />
+          <input type="password" id="adminPass" placeholder="Enter admin password"
+                 onkeydown="if(event.key==='Enter') login()" autofocus />
         </div>
         <button class="btn btn-primary" onclick="login()" style="width:100%;justify-content:center;margin-top:.5rem;">
           Sign In
         </button>
         <div id="loginError" class="error-msg" style="display:none;margin-top:.85rem;">
-          <span>⚠️</span> Incorrect password. Please try again.
+          <span>⚠️</span> Incorrect password.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ADMIN DASHBOARD (hidden until login) -->
+  <!-- DASHBOARD -->
   <div id="adminDash" style="display:none;">
 
     <header class="site-header">
       <div class="container">
         <div class="header-inner">
           <div class="logo">
-            <span class="logo-icon">📡</span>
-            <span class="logo-text">NodeCheck <span style="opacity:.5;font-weight:400;font-size:.85rem;">Admin</span></span>
+            <span class="logo-icon">🌐</span>
+            <span class="logo-text">WhoIsMyProvider <span style="opacity:.45;font-weight:400;font-size:.8rem;">Admin</span></span>
           </div>
           <div style="display:flex;align-items:center;gap:1rem;">
-            <span id="reportCount" style="font-size:.85rem;color:var(--text-muted);">Loading…</span>
+            <span id="reportCount" style="font-size:.85rem;color:var(--muted);">Loading…</span>
             <button class="logout-btn" onclick="logout()">Log Out</button>
           </div>
         </div>
@@ -63,8 +64,11 @@
                 <th>Date</th>
                 <th>Name</th>
                 <th>ZIP</th>
-                <th>Provider</th>
-                <th>Status / Experience</th>
+                <th>Legacy Brand</th>
+                <th>ISP (raw)</th>
+                <th>ASN</th>
+                <th>RDNS</th>
+                <th>Experience</th>
                 <th>City</th>
                 <th>State</th>
                 <th>IP</th>
@@ -73,7 +77,7 @@
               </tr>
             </thead>
             <tbody id="reportsBody">
-              <tr><td colspan="11" class="empty-state">Loading reports…</td></tr>
+              <tr><td colspan="14" class="empty-state">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -82,8 +86,8 @@
 
     <footer class="site-footer">
       <div class="container">
-        <p>NodeCheck Admin Panel — private &amp; password-protected</p>
-        <p style="margin-top:.4rem;font-size:.8rem;"><a href="index.html" style="color:var(--text-muted);">← Back to public site</a></p>
+        <p>WhoIsMyProvider Admin — Private Dashboard</p>
+        <p style="margin-top:.4rem;font-size:.8rem;"><a href="index.html" style="color:var(--muted);">← Back to site</a></p>
       </div>
     </footer>
   </div>

@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spectrum Node Checker — Highsplit Status</title>
+  <title>Who's My Provider? — Node & ISP Lookup</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
@@ -15,11 +14,11 @@
     <div class="container">
       <div class="header-inner">
         <div class="logo">
-          <span class="logo-icon">📡</span>
-          <span class="logo-text">NodeCheck</span>
+          <span class="logo-icon">🌐</span>
+          <span class="logo-text">WhoIsMyProvider</span>
         </div>
         <nav>
-          <a href="#about">About</a>
+          <a href="#results">My Info</a>
           <a href="#report">Submit Report</a>
         </nav>
       </div>
@@ -29,154 +28,183 @@
   <!-- HERO -->
   <section class="hero">
     <div class="container">
-      <h1>Is Highsplit Being Worked On<br />In <span class="highlight">Your Area?</span></h1>
-      <p class="hero-sub">We automatically detect your internet provider and check whether node split upgrades are active or planned near you.</p>
-      <button id="checkBtn" class="btn btn-primary" onclick="runCheck()">
-        <span class="btn-icon">🔍</span> Check My Node Now
+      <h1>Who Is Your<br /><span class="highlight">Internet Provider?</span></h1>
+      <p class="hero-sub">
+        We instantly detect your IP address, DNS hostname, ASN, and network details — then identify exactly which cable company your connection belongs to, including legacy brands like Time Warner Cable, Cox, and Charter.
+      </p>
+      <button id="checkBtn" class="btn btn-primary" onclick="runLookup()">
+        <span class="btn-icon">🔍</span> Look Up My Connection
       </button>
-    </div>
-  </section>
-
-  <!-- RESULTS CARD -->
-  <section class="results-section container" id="results" style="display:none;">
-    <div class="card results-card">
-
-      <div class="card-header">
-        <h2>Your Connection Details</h2>
-        <span class="badge" id="statusBadge">Checking…</span>
-      </div>
-
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="info-label">IP Address</div>
-          <div class="info-value" id="ipVal">—</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">Internet Provider</div>
-          <div class="info-value" id="ispVal">—</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">Provider Legacy Brand</div>
-          <div class="info-value" id="legacyVal">—</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">ASN / Network</div>
-          <div class="info-value" id="asnVal">—</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">Location</div>
-          <div class="info-value" id="locVal">—</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">ZIP / Postal Code</div>
-          <div class="info-value" id="zipVal">—</div>
-        </div>
-      </div>
-
-      <!-- HIGHSPLIT STATUS BOX -->
-      <div class="highsplit-box" id="highsplitBox">
-        <div class="highsplit-icon" id="highsplitIcon">⏳</div>
-        <div class="highsplit-text">
-          <h3 id="highsplitTitle">Checking Highsplit Status…</h3>
-          <p id="highsplitDesc">Please wait while we look up your area.</p>
-          <div class="eta-badge" id="etaBadge" style="display:none;">
-            <span>🗓️ Estimated Completion:</span>
-            <strong id="etaVal"></strong>
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
   <!-- SPINNER -->
   <div class="spinner-wrap" id="spinner" style="display:none;">
     <div class="spinner"></div>
-    <p>Looking up your provider…</p>
+    <p>Fetching your network details…</p>
   </div>
 
-  <!-- ABOUT -->
-  <section class="about-section container" id="about">
-    <div class="card">
-      <h2>What Is a Node Split (Highsplit)?</h2>
-      <p>Cable internet providers like <strong>Spectrum</strong> (which acquired Time Warner Cable, Charter, and Cox) serve neighborhoods through shared network <em>nodes</em>. As more customers stream and work from home, those nodes become congested.</p>
-      <p>A <strong>node split</strong> — also called a <em>Highsplit</em> upgrade — divides a congested node into smaller segments, dramatically improving speeds and reliability for everyone on it. This site helps you find out if that work is underway or coming soon to your area.</p>
-      <div class="info-chips">
-        <span class="chip chip-twc">🔵 Time Warner Cable (TWC)</span>
-        <span class="chip chip-charter">🟣 Charter</span>
-        <span class="chip chip-cox">🟠 Cox</span>
-        <span class="chip chip-spectrum">⚪ Spectrum</span>
+  <!-- RESULTS -->
+  <section class="results-section container" id="results" style="display:none;">
+
+    <!-- PROVIDER BANNER -->
+    <div class="provider-banner" id="providerBanner">
+      <div class="provider-logo" id="providerLogo">📡</div>
+      <div class="provider-info">
+        <div class="provider-label">Your Internet Provider</div>
+        <div class="provider-name" id="providerName">—</div>
+        <div class="provider-sub" id="providerSub">—</div>
+      </div>
+      <div class="provider-badge-wrap">
+        <span class="provider-badge" id="providerBadge">—</span>
       </div>
     </div>
+
+    <!-- DETAIL GRID -->
+    <div class="card detail-card">
+      <h2 class="section-title">Your Network Details</h2>
+      <div class="info-grid">
+
+        <div class="info-item">
+          <div class="info-label">🔢 IP Address</div>
+          <div class="info-value mono" id="dIp">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🔄 Reverse DNS (RDNS)</div>
+          <div class="info-value mono small" id="dRdns">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🏢 ISP / Organization</div>
+          <div class="info-value" id="dIsp">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">📡 ASN (Network Number)</div>
+          <div class="info-value mono" id="dAsn">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🏙️ City</div>
+          <div class="info-value" id="dCity">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🗺️ Region / State</div>
+          <div class="info-value" id="dRegion">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">📮 ZIP Code</div>
+          <div class="info-value mono" id="dZip">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🌍 Country</div>
+          <div class="info-value" id="dCountry">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">⏰ Timezone</div>
+          <div class="info-value" id="dTimezone">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">📶 Connection Type</div>
+          <div class="info-value" id="dType">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🛡️ VPN / Proxy</div>
+          <div class="info-value" id="dProxy">—</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">🏷️ Legacy Brand Detected</div>
+          <div class="info-value" id="dLegacy">—</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PROVIDER EXPLANATION -->
+    <div class="card explain-card" id="explainCard">
+      <div class="explain-icon" id="explainIcon">📡</div>
+      <div class="explain-text">
+        <h3 id="explainTitle">Provider Identified</h3>
+        <p id="explainDesc">—</p>
+      </div>
+    </div>
+
   </section>
 
   <!-- REPORT FORM -->
   <section class="report-section container" id="report">
     <div class="card">
-      <h2>Submit Your Experience</h2>
-      <p>Help us build a more complete picture of Highsplit rollouts. Share what you're seeing — slow speeds, construction activity, technician visits, or an improvement after an upgrade.</p>
+      <h2>Submit Your Report</h2>
+      <p>Share your experience with your provider — speeds, outages, service quality, or anything else. Your connection details are auto-filled below.</p>
 
       <form id="reportForm" onsubmit="submitReport(event)">
         <div class="form-row">
           <div class="form-group">
-            <label for="rName">Your Name <span class="optional">(optional)</span></label>
+            <label>Your Name <span class="optional">(optional)</span></label>
             <input type="text" id="rName" placeholder="e.g. Jane Doe" />
           </div>
           <div class="form-group">
-            <label for="rEmail">Email <span class="optional">(optional)</span></label>
+            <label>Email <span class="optional">(optional)</span></label>
             <input type="email" id="rEmail" placeholder="you@example.com" />
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label for="rZip">ZIP Code *</label>
-            <input type="text" id="rZip" placeholder="e.g. 90210" required maxlength="10" />
+            <label>Provider Detected</label>
+            <input type="text" id="rProvider" placeholder="Run the lookup above first" readonly />
           </div>
           <div class="form-group">
-            <label for="rProvider">Provider / Legacy Brand *</label>
-            <select id="rProvider" required>
-              <option value="">— Select —</option>
-              <option>Spectrum</option>
-              <option>Time Warner Cable (TWC)</option>
-              <option>Charter</option>
-              <option>Cox</option>
-              <option>Other</option>
-            </select>
+            <label>ZIP Code</label>
+            <input type="text" id="rZip" placeholder="Run the lookup above first" />
           </div>
         </div>
+
         <div class="form-group full">
-          <label for="rStatus">What Are You Experiencing? *</label>
+          <label>What Are You Experiencing? *</label>
           <select id="rStatus" required>
             <option value="">— Select —</option>
-            <option>Speeds improved recently — upgrade may be done</option>
-            <option>Saw construction / node work near my area</option>
-            <option>Technician visited — mentioned node work</option>
-            <option>Still having congestion / slow speeds</option>
-            <option>No changes noticed</option>
+            <option>Speeds are great — no complaints</option>
+            <option>Speeds are slow / inconsistent</option>
+            <option>Frequent outages or disconnections</option>
+            <option>Service just recently improved</option>
+            <option>Service recently got worse</option>
             <option>Other</option>
           </select>
         </div>
+
         <div class="form-group full">
-          <label for="rNotes">Additional Notes <span class="optional">(optional)</span></label>
-          <textarea id="rNotes" rows="4" placeholder="Any details you'd like to share…"></textarea>
+          <label>Additional Notes <span class="optional">(optional)</span></label>
+          <textarea id="rNotes" rows="4" placeholder="Speeds you're seeing, times of day it's worst, anything you want to share…"></textarea>
         </div>
 
-        <!-- Hidden fields auto-filled from IP lookup -->
+        <!-- Hidden auto-filled fields -->
         <input type="hidden" id="rIp" />
         <input type="hidden" id="rIsp" />
+        <input type="hidden" id="rAsn" />
+        <input type="hidden" id="rRdns" />
         <input type="hidden" id="rCity" />
         <input type="hidden" id="rState" />
+        <input type="hidden" id="rLegacy" />
 
         <button type="submit" class="btn btn-primary" id="submitBtn">
-          <span class="btn-icon">📤</span> Submit My Report
+          <span class="btn-icon">📤</span> Submit Report
         </button>
       </form>
 
       <div id="formSuccess" class="success-msg" style="display:none;">
-        <span>✅</span> Thank you! Your report has been submitted successfully.
+        <span>✅</span> Thank you! Your report was submitted.
       </div>
       <div id="formError" class="error-msg" style="display:none;">
-        <span>⚠️</span> Something went wrong. Please try again or check your connection.
+        <span>⚠️</span> Something went wrong. Please try again.
       </div>
     </div>
   </section>
@@ -184,9 +212,9 @@
   <!-- FOOTER -->
   <footer class="site-footer">
     <div class="container">
-      <p>NodeCheck is an independent community resource and is not affiliated with Spectrum, Charter, Cox, or any ISP.</p>
-      <p style="margin-top:.4rem;font-size:.8rem;opacity:.5;">
-        <a href="admin.html" style="color:inherit;opacity:.4;text-decoration:none;">Admin</a>
+      <p>WhoIsMyProvider is an independent community tool. Not affiliated with Spectrum, Charter, Cox, or any ISP.</p>
+      <p style="margin-top:.4rem;">
+        <a href="admin.html" style="color:inherit;opacity:.25;font-size:.78rem;text-decoration:none;">Admin</a>
       </p>
     </div>
   </footer>
