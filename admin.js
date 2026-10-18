@@ -6,7 +6,7 @@
    =================================================== */
 
 const ADMIN_PASSWORD    = "sss";             // ← CHANGE THIS
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwG2wNJkiT7YhxOw4_dZyqAaWAAludrR84O9QuU16N0GSSY8_K9KS5MqMXPsXKdMWN/exec"; // ← same as app.js
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgBcrzO67pB01TRXitTOSRu9Sw2FLqxjfVf2lZCgl7HWHxf0ejdjssO4L3oy3y0WUJ/exec"; // ← same as app.js
 
 const SESSION_KEY = "wimp_admin_auth";
 
