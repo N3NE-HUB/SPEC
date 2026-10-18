@@ -5,7 +5,7 @@
    Paste the same GOOGLE_SCRIPT_URL from app.js.
    =================================================== */
 
-const ADMIN_PASSWORD    = "naborcito";             // ← CHANGE THIS
+const ADMIN_PASSWORD    = "sss";             // ← CHANGE THIS
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwG2wNJkiT7YhxOw4_dZyqAaWAAludrR84O9QuU16N0GSSY8_K9KS5MqMXPsXKdMWN/exec"; // ← same as app.js
 
 const SESSION_KEY = "wimp_admin_auth";
