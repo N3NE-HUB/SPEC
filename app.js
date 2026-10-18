@@ -200,24 +200,85 @@ async function runLookup() {
 }
 
 // ─────────────────────────────────────────────────────
-// IP-API FETCH
-// Free, no API key needed. Fields we request:
-//   query, isp, org, as, asname, reverse,
-//   city, regionName, zip, country, timezone,
-//   mobile, proxy, hosting
+// IP FETCH — uses ipwho.is (free, HTTPS, no key needed)
+// Falls back to ipapi.co if ipwho.is fails.
+// Then fetches Reverse DNS via Google DNS-over-HTTPS.
 // ─────────────────────────────────────────────────────
 async function fetchIpData() {
-  const fields = [
-    "status","message","query","isp","org","as","asname",
-    "reverse","city","regionName","zip","country",
-    "timezone","mobile","proxy","hosting"
-  ].join(",");
+  let raw = null;
 
-  const res  = await fetch(`https://ip-api.com/json/?fields=${fields}`);
-  const data = await res.json();
+  // Primary: ipwho.is (supports HTTPS, no API key)
+  try {
+    const res = await fetch("https://ipwho.is/");
+    raw = await res.json();
+    if (!raw.success) raw = null;
+  } catch (e) { raw = null; }
 
-  if (data.status !== "success") throw new Error(data.message || "Lookup failed");
+  // Fallback: ipapi.co (also free HTTPS)
+  if (!raw) {
+    const res = await fetch("https://ipapi.co/json/");
+    const fb  = await res.json();
+    if (fb.error) throw new Error(fb.reason || "IP lookup failed");
+    // Normalize ipapi.co format
+    raw = {
+      success:    true,
+      ip:         fb.ip,
+      city:       fb.city,
+      region:     fb.region,
+      postal:     fb.postal,
+      country:    fb.country_name,
+      timezone:   { id: fb.timezone },
+      connection: { asn: parseInt((fb.asn||"").replace("AS","")), isp: fb.org, org: fb.org }
+    };
+  }
+
+  const conn   = raw.connection || {};
+  const asnNum = conn.asn || "";
+  const isp    = conn.isp || conn.org || "";
+
+  // Normalize to a single format our app understands
+  const data = {
+    query:      raw.ip          || "",
+    isp:        isp,
+    org:        conn.org        || isp,
+    as:         asnNum ? `AS${asnNum} ${isp}` : "",
+    asname:     isp,
+    reverse:    "",                          // filled below
+    city:       raw.city        || "",
+    regionName: raw.region      || "",
+    zip:        raw.postal      || "",
+    country:    raw.country     || "",
+    timezone:   (raw.timezone && raw.timezone.id) || "",
+    mobile:     false,
+    proxy:      false,
+    hosting:    false,
+  };
+
+  // Reverse DNS via Google DNS-over-HTTPS (no mixed-content issue)
+  try { data.reverse = await fetchRdns(data.query); } catch (e) { /* ignore */ }
+
   return data;
+}
+
+// ─────────────────────────────────────────────────────
+// REVERSE DNS LOOKUP
+// Uses Google's DNS-over-HTTPS API (always HTTPS, free)
+// Looks up PTR record for the visitor's IP address.
+// ─────────────────────────────────────────────────────
+async function fetchRdns(ip) {
+  if (!ip) return "";
+  // Convert "1.2.3.4" → "4.3.2.1.in-addr.arpa" for PTR lookup
+  const reversed = ip.split(".").reverse().join(".") + ".in-addr.arpa";
+  const res  = await fetch(
+    `https://dns.google/resolve?name=${encodeURIComponent(reversed)}&type=PTR`,
+    { headers: { Accept: "application/json" } }
+  );
+  const json = await res.json();
+  if (json.Answer && json.Answer.length > 0) {
+    // Remove trailing dot that DNS responses include
+    return json.Answer[0].data.replace(/\.$/, "");
+  }
+  return "";
 }
 
 // ─────────────────────────────────────────────────────
